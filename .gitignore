@@ -1,0 +1,33 @@
+# =========================
+# Node.js (Frontend & Backend)
+# =========================
+node_modules/
+dist/
+build/
+npm-debug.log*
+
+# =========================
+# Python (AI Agent)
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.pytest_cache/
+
+# =========================
+# Playwright (Testing artifacts)
+# =========================
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# =========================
+# Environment Variables & OS
+# =========================
+.env
+.env.local
+.DS_Store
+Thumbs.db
