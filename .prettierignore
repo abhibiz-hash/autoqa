@@ -1,0 +1,24 @@
+# Dependency directories
+node_modules/
+
+# Build/output directories
+dist/
+build/
+out/
+
+# Coverage reports (if you use Jest/Vitest)
+coverage/
+
+# Artifacts & Cache
+.next/
+.nuxt/
+.cache/
+
+# Large data or generated files
+*.min.js
+package-lock.json
+yarn.lock
+
+# Secret files (already in .gitignore, but safe to keep here too)
+.env
+.env.*
