@@ -2,7 +2,10 @@ from typing import TypedDict, List, Dict, Any
 import json
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
+from langgraph.graph import StateGraph, END
+from dotenv import load_dotenv
 
+load_dotenv()
 # 1. Define the LangGraph State
 # This is the "memory" that gets passed from one AI node to the next
 class GraphState(TypedDict):
@@ -42,8 +45,29 @@ def analyze_page_type(state: GraphState) -> GraphState:
 def process_dom_with_agent(payload: dict):
     print(f"🤖 Agent initialized for URL: {payload.get('url')}")
     
+    # Initialize the State with the data from Node.js
+    initial_state: GraphState = {
+        "url": payload.get("url", ""),
+        "title": payload.get("title", ""),
+        "elements": payload.get("interactiveElements", []),
+        "page_type": "",
+        "test_plan": "",
+        "playwright_code": ""
+    }
+    
+    # Build the LangGraph workflow
+    workflow = StateGraph(GraphState)
+
+    workflow.add_node("analyze", analyze_page_type)
+
+    workflow.set_entry_point("analyze")
+    workflow.add_edge("analyze", END) #add more nodes later
+
+    app = workflow.compile()
+    final_state = app.invoke(initial_state)
     
     return {
         "success": True,
-        "message": "Agent service successfully hit!"
+        "message": "AI successfully analyzed the DOM.",
+        "page_type": final_state["page_type"]
     }
