@@ -4,6 +4,9 @@ import { Server } from "socket.io";
 import cors from "cors";
 import dotenv from "dotenv";
 
+//Routes Import
+import analyzeRoutes from "./routes/analyze.routes"
+
 dotenv.config();
 
 const app = express()
@@ -24,6 +27,9 @@ const PORT = process.env.port || 3000;
 app.get("/health", (req, res) => {
     res.json({ status: "AutoQA Orchestrator is running! 🚀" });
 });
+
+//Routes
+app.use("/api/analyze", analyzeRoutes);
 
 io.on("connection", (socket) => {
     console.log(`🔌 Client connected: ${socket.id}`);
