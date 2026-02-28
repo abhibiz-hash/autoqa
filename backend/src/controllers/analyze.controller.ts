@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { extractSemanticDOM } from '../services/extractor.service';
-import { generateTestScript } from "../services/ai.service";
+import { generateTestScript } from '../services/ai.service';
+import { saveTestScript } from '../services/runner.service';
 
 export const analyzeUrl = async (req: Request, res: Response): Promise<any> => {
   const { url } = req.body;
@@ -20,11 +21,14 @@ export const analyzeUrl = async (req: Request, res: Response): Promise<any> => {
     const payloadForAI = {
       url: url,
       title: domData.title,
-      interactiveElements: domData.interactiveElements
-    }
+      interactiveElements: domData.interactiveElements,
+    };
 
     //forwarding DOM to AI Agent
     const aiResult = await generateTestScript(payloadForAI);
+
+    //Save the generated code to the file system
+    const savedFilePath = await saveTestScript(url, aiResult.code);
 
     res.status(200).json({
       success: true,
@@ -32,11 +36,14 @@ export const analyzeUrl = async (req: Request, res: Response): Promise<any> => {
         url: url,
         pageType: aiResult.page_type,
         testPlan: aiResult.test_plan,
-        code: aiResult.code
-      }
+        code: aiResult.code,
+        filePath: savedFilePath,
+      },
     });
   } catch (error) {
-    console.error("❌ Orchestration error:", error);
-    res.status(500).json({ error: "Failed to analyze URL and generate test script." });
+    console.error('❌ Orchestration error:', error);
+    res
+      .status(500)
+      .json({ error: 'Failed to analyze URL and generate test script.' });
   }
 };
