@@ -64,7 +64,10 @@ def generate_code(state: GraphState) -> GraphState:
     system_prompt = """You are a Senior Software Developer in Test (SDET).
     Write a complete, executable Playwright TypeScript test script using the provided test plan and DOM elements.
     Rules:
-    - Use modern Playwright semantic locators (e.g., getByRole, getByPlaceholder, getByLabel).
+    - STRICT RULE: ONLY use locators based on the exact attributes provided in the DOM JSON. Do not hallucinate attributes.
+    - STRICT MODE PROTECTION: Webpages often have duplicate forms (e.g., Login vs Create Account). To prevent Playwright strict mode violations, ALWAYS append .first() to your locators (e.g., page.locator('[name="acct"]').first() or page.getByRole('button', { name: 'login' }).first()).
+    - SYNTHETIC DATA RULE: You are testing with dummy data. Forms and logins WILL fail in reality. DO NOT assert successful post-submit redirects (like toHaveURL) or welcome messages. End the test immediately after clicking the submit button.
+    - If an element only has a 'name' attribute, safely fallback to standard CSS locators like page.locator('[name="xyz"]').first().
     - Do NOT wrap the output in markdown code blocks (```typescript).
     - Respond ONLY with the raw, executable TypeScript code."""
 
