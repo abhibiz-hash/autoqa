@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { spawn } from "child_process";
+import { spawn } from 'child_process';
 
 export async function saveTestScript(
   url: string,
@@ -32,37 +32,37 @@ export async function saveTestScript(
   }
 }
 
-export function executeTestScript(filePath: string): Promise<string>{
-  return new Promise((resolve, reject) =>{
+export function executeTestScript(filePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
     console.log(`🚀 Spawning child process to execute: ${filePath}`);
 
     //Spawning a background terminal to run the Playwright Script
-    const child = spawn("npx", ["playwright", "test", filePath], {
-      shell:true,
+    const child = spawn('npx', ['playwright', 'test', filePath], {
+      shell: true,
     });
 
-    let outputLog = "";
+    let outputLog = '';
 
     //to listen to standard output (the normal playwright test logs)
-    child.stdout.on("data", (data) => {
+    child.stdout.on('data', (data) => {
       const message = data.toString();
       console.log(`[Playwright]: ${message.trim()}`);
       outputLog += message;
     });
 
     //listen to error output (if the test fails or crashes)
-    child.stderr.on("data", (data) => {
+    child.stderr.on('data', (data) => {
       const errorMessage = data.toString();
       console.error(`[Playwright Error]: ${errorMessage.trim()}`);
       outputLog += errorMessage;
     });
 
     // Resolving/rejecting the promise when the process completely finishes
-    child.on("close", (code) => {
-      if(code===0){
+    child.on('close', (code) => {
+      if (code === 0) {
         console.log(`✅ Test executed successfully!`);
         resolve(outputLog);
-      } else{
+      } else {
         console.log(`❌ Test failed with exit code: ${code}`);
         //still resolve because a failed test is still a successful execution of our playwright script
         resolve(outputLog);
