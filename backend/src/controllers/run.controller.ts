@@ -12,11 +12,11 @@ export const runTest = async (req: Request, res: Response): Promise<any> => {
   try {
     console.log(`▶️ Controller received request to execute: ${filePath}`);
 
-    const logs = await executeTestScript(filePath);
-    res.status(200).json({
-      success: true,
-      message: 'Test execution completed.',
-      logs: logs,
+    const executionResult = await executeTestScript(filePath);
+    res.status(200).json({ 
+      success: true, 
+      message: "Test execution completed.",
+      data: executionResult // holds { terminalLogs, report }
     });
   } catch (error) {
     console.error('Orchestration error during execution:', error);

@@ -32,40 +32,55 @@ export async function saveTestScript(
   }
 }
 
-export function executeTestScript(filePath: string): Promise<string> {
+export function executeTestScript(filePath: string): Promise<{ terminalLogs: string; report: any }> {
   return new Promise((resolve, reject) => {
     console.log(`🚀 Spawning child process to execute: ${filePath}`);
 
+    const reportPath = path.join(__dirname, '../../tests/generated/test-report.json');
+
     //Spawning a background terminal to run the Playwright Script
-    const child = spawn('npx', ['playwright', 'test', filePath], {
+    const child = spawn("npx", ["playwright", "test", filePath, "--reporter=json"], {
       shell: true,
+      env: { 
+        ...process.env, 
+        PLAYWRIGHT_JSON_OUTPUT_NAME: reportPath // Tells Playwright where to save the JSON
+      }
     });
 
-    let outputLog = '';
+    let terminalLogs = "";
 
     //to listen to standard output (the normal playwright test logs)
-    child.stdout.on('data', (data) => {
+    child.stdout.on("data", (data) => {
       const message = data.toString();
       console.log(`[Playwright]: ${message.trim()}`);
-      outputLog += message;
+      terminalLogs += message;
     });
 
     //listen to error output (if the test fails or crashes)
-    child.stderr.on('data', (data) => {
+    child.stderr.on("data", (data) => {
       const errorMessage = data.toString();
       console.error(`[Playwright Error]: ${errorMessage.trim()}`);
-      outputLog += errorMessage;
+      terminalLogs += errorMessage;
     });
 
     // Resolving/rejecting the promise when the process completely finishes
-    child.on('close', (code) => {
-      if (code === 0) {
-        console.log(`✅ Test executed successfully!`);
-        resolve(outputLog);
-      } else {
-        console.log(`❌ Test failed with exit code: ${code}`);
-        //still resolve because a failed test is still a successful execution of our playwright script
-        resolve(outputLog);
+    child.on("close", async (code) => {
+      console.log(`🏁 Process exited with code: ${code}`);
+      
+      try {
+        // Read the JSON report file that Playwright just created
+        const reportContent = await fs.readFile(reportPath, 'utf-8');
+        const jsonReport = JSON.parse(reportContent);
+        
+        // Resolve with BOTH the raw logs (for debugging) and the structured JSON (for the UI)
+        resolve({
+          terminalLogs: terminalLogs,
+          report: jsonReport
+        });
+      } catch (error) {
+        console.error("❌ Failed to read or parse Playwright JSON report:", error);
+        // Fallback just in case the report generation fails
+        resolve({ terminalLogs: terminalLogs, report: null });
       }
     });
   });

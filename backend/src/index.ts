@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 
 //Routes Import
 import analyzeRoutes from "./routes/analyze.routes"
-import { runTest } from "./controllers/runner.controller";
+import runRoutes from "./routes/run.routes";
 
 dotenv.config();
 
@@ -31,7 +31,8 @@ app.get("/health", (req, res) => {
 
 //Routes
 app.use("/api/analyze", analyzeRoutes);
-app.post("/api/run", runTest);
+app.use("/api", runRoutes);
+
 
 io.on("connection", (socket) => {
     console.log(`🔌 Client connected: ${socket.id}`);
