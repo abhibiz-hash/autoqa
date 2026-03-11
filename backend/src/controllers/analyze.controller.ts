@@ -4,7 +4,7 @@ import { generateTestScript } from '../services/ai.service';
 import { saveTestScript } from '../services/runner.service';
 
 export const analyzeUrl = async (req: Request, res: Response): Promise<any> => {
-  const { url } = req.body;
+  const { url, intent } = req.body;
 
   if (!url) {
     return res
@@ -15,6 +15,8 @@ export const analyzeUrl = async (req: Request, res: Response): Promise<any> => {
   try {
     console.log(`📥 Controller received request to analyze: ${url}`);
 
+    if (intent) console.log(`🎯 User Intent: "${intent}"`);
+
     //extracting semantic DOM
     const domData = await extractSemanticDOM(url);
 
@@ -22,6 +24,7 @@ export const analyzeUrl = async (req: Request, res: Response): Promise<any> => {
       url: url,
       title: domData.title,
       interactiveElements: domData.interactiveElements,
+      prompt: intent
     };
 
     //forwarding DOM to AI Agent
@@ -34,6 +37,7 @@ export const analyzeUrl = async (req: Request, res: Response): Promise<any> => {
       success: true,
       data: {
         url: url,
+        intent: intent || "Default Happy Path",
         pageType: aiResult.page_type,
         testPlan: aiResult.test_plan,
         code: aiResult.code,
