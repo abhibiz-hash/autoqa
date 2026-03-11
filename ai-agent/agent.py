@@ -12,9 +12,10 @@ class GraphState(TypedDict):
     url: str
     title: str
     elements: List[Dict[str, Any]]
-    page_type: str          # The AI will decide this (ex- "Login Page", "Checkout")
-    test_plan: str          # The AI's step by step reasoning
-    playwright_code: str    # The final synthesized script
+    prompt: str
+    page_type: str          # The AI will decide this (Login Page, Checkout)
+    test_plan: str          # The AI's step by step plan
+    playwright_code: str    # The final test script
 
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
@@ -42,13 +43,26 @@ def analyze_page_type(state: GraphState) -> GraphState:
     return state
 
 def plan_test(state: GraphState) -> GraphState:
-    print(f"📝 Node 2: Writing test plan for {state['page_type']}...")
+    print(f"📝 Node 2: Writing intent-driven test plan...")
 
     system_prompt = """You are an expert QA Automation Lead.
-    Based on the provided page type and DOM elements, write a clear, step-by-step test plan for the 'happy path' (e.g., successful login, successful search).
+    You will be provided with a web page's interactive elements and a User Prompt describing what to test.
+    
+    Your goal is to write a numbered, step-by-step test plan to fulfill the user's request.
+    
+    RULES FOR INFERRING MISSING DATA:
+    - If the user provides specific inputs (e.g., 'use username admin'), use them.
+    - If the user does NOT provide inputs but the test requires them (e.g., 'test search'), invent highly obvious dummy data (e.g., 'test_search_query').
+    - If the user provides an expected outcome (e.g., 'assert error message appears'), plan a step to verify it.
+    - If the user does NOT provide an expected outcome, infer a logical Playwright assertion (e.g., checking if a resulting element is visible, or if the URL changed).
+    
     Keep it concise. Respond ONLY with the numbered steps."""
 
-    human_prompt = f"Page Type: {state['page_type']}\nElements: {json.dumps(state['elements'], indent=2)}"
+    human_prompt = f"""
+    Page Type: {state['page_type']}
+    User Prompt: {state.get('prompt', 'Test the primary functionality of this page.')}
+    Elements: {json.dumps(state['elements'], indent=2)}
+    """
 
     response = llm.invoke([
         SystemMessage(content=system_prompt),
@@ -63,16 +77,17 @@ def generate_code(state: GraphState) -> GraphState:
 
     system_prompt = """You are a Senior Software Developer in Test (SDET).
     Write a complete, executable Playwright TypeScript test script using the provided test plan and DOM elements.
+    
     Rules:
     - STRICT RULE: ONLY use locators based on the exact attributes provided in the DOM JSON. Do not hallucinate attributes.
-    - STRICT MODE PROTECTION: Webpages often have duplicate forms (e.g., Login vs Create Account). To prevent Playwright strict mode violations, ALWAYS append .first() to your locators (e.g., page.locator('[name="acct"]').first() or page.getByRole('button', { name: 'login' }).first()).
-    - SYNTHETIC DATA RULE: You are testing with dummy data. Forms and logins WILL fail in reality. DO NOT assert successful post-submit redirects (like toHaveURL) or welcome messages. End the test immediately after clicking the submit button.
-    - If an element only has a 'name' attribute, safely fallback to standard CSS locators like page.locator('[name="xyz"]').first().
+    - STRICT MODE PROTECTION: Always append .first() to your locators to prevent strict mode violations (e.g., page.locator('[name="acct"]').first()).
+    - ASSERTIONS: You MUST end the test with a Playwright expect() assertion that fulfills the final step of the test plan.
     - Do NOT wrap the output in markdown code blocks (```typescript).
     - Respond ONLY with the raw, executable TypeScript code."""
 
     human_prompt = f"""
     URL: {state['url']}
+    User Prompt: {state.get('prompt', 'Test the primary functionality.')}
     Test Plan: {state['test_plan']}
     Elements: {json.dumps(state['elements'], indent=2)}
     """
@@ -97,6 +112,7 @@ def process_dom_with_agent(payload: dict):
         "url": payload.get("url", ""),
         "title": payload.get("title", ""),
         "elements": payload.get("interactiveElements", []),
+        "prompt": payload.get("prompt"),
         "page_type": "",
         "test_plan": "",
         "playwright_code": ""

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import uvicorn
 from dotenv import load_dotenv
 
@@ -15,6 +15,7 @@ class DOMPayload(BaseModel):
     url: str
     title: str
     interactiveElements: List[Dict[str, Any]]
+    prompt: Optional[str] = "Find the primary functionality of this page and write a standard happy-path test for it."
 
 @app.get("/health")
 def health_check():
