@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  /* Primary Energy: Deep molten amber / warm gold */
+  --color-core-amber: #d97706; 
+  /* Secondary Energy: Muted teal-green */
+  --color-core-teal: #0d9488;
+  /* Accent Energy: Soft electric coral */
+  --color-core-coral: #fb7185;
+  /* Core Glow: Warm ivory white */
+  --color-core-ivory: #ffedd5;
+  /* Background Space: Deep charcoal / near black */
+  --color-bg-charcoal: #0a0a0a;
+
+  /* Font */
+  --font-inter: "Inter", sans-serif;
+}
+
+body {
+  background-color: var(--color-bg-charcoal);
+  color: white;
+  font-family: var(--font-inter);
+  /* This prevents the page from scrolling weirdly if the layout is locked */
+  overflow-x: hidden; 
+}
